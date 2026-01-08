@@ -11,7 +11,7 @@ import { Badge } from '../components/ui/badge';
 import { getSnmpHistory, getSnmpLatest } from '../lib/api';
 import { toast } from 'sonner';
 
-const nodes = ['c01', 'c02', 'c03', 'c04', 'c05'] as const;
+const nodes = ['c01', 'c02', 'c03', 'c04', 'c05', 'c06'] as const;
 
 export function Monitoring() {
 	const [latest, setLatest] = useState<Record<string, any> | null>(null);
