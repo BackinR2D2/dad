@@ -1,8 +1,8 @@
 const express = require('express');
+const cors = require('cors');
 const { MongoClient } = require('mongodb');
 const mysql = require('mysql2/promise');
 const { collectNodeMetrics } = require('./snmpCollector');
-const cors = require('cors');
 
 const app = express();
 app.use(cors());
@@ -30,7 +30,7 @@ const NODES = [
 ];
 
 let metricsCol;
-let mysqlConn;
+let mysqlPool;
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
@@ -63,18 +63,21 @@ async function initMongo() {
 }
 
 async function initMySQL() {
-	mysqlConn = await retry('mysql-connect', async () => {
-		const conn = await mysql.createConnection({
+	mysqlPool = await retry('mysql-pool', async () => {
+		const pool = mysql.createPool({
 			host: MYSQL_HOST,
 			user: MYSQL_USER,
 			password: MYSQL_PASSWORD,
 			database: MYSQL_DB,
+			waitForConnections: true,
+			connectionLimit: 10,
+			queueLimit: 0,
 		});
-		await conn.query('SELECT 1');
-		return conn;
+		await pool.query('SELECT 1');
+		return pool;
 	});
 
-	await mysqlConn.execute(`
+	await mysqlPool.execute(`
     CREATE TABLE IF NOT EXISTS images (
       id BIGINT AUTO_INCREMENT PRIMARY KEY,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -87,6 +90,7 @@ async function initMySQL() {
 
 async function pollAll() {
 	const results = [];
+
 	for (const n of NODES) {
 		try {
 			const m = await collectNodeMetrics(n);
@@ -100,7 +104,10 @@ async function pollAll() {
 			});
 		}
 	}
-	if (results.length) await metricsCol.insertMany(results);
+
+	if (results.length) {
+		await metricsCol.insertMany(results);
+	}
 }
 
 // --- SNMP endpoints ---
@@ -122,7 +129,7 @@ app.get('/snmp/history', async (req, res) => {
 	const limit = Math.min(200, Math.max(1, Number(req.query.limit || 50)));
 	const found = NODES.find((x) => x.name === node);
 	if (!found)
-		return res.status(400).json({ error: 'Unknown node. Use node=c01..c05' });
+		return res.status(400).json({ error: 'Unknown node. Use node=c01..c06' });
 
 	const docs = await metricsCol
 		.find({ host: found.host })
@@ -152,10 +159,11 @@ app.post(
 			if (!data || !data.length)
 				return res.status(400).json({ error: 'Empty body' });
 
-			const [result] = await mysqlConn.execute(
+			const [result] = await mysqlPool.execute(
 				'INSERT INTO images(filename, mime, data) VALUES(?, ?, ?)',
 				[filename, mime, data]
 			);
+
 			console.log('DEBUG IMAGE POST');
 			res.json({ id: result.insertId, zoomIn, percent, filename });
 		} catch (e) {
@@ -166,7 +174,7 @@ app.post(
 
 app.get('/images/:id', async (req, res) => {
 	const id = Number(req.params.id);
-	const [rows] = await mysqlConn.execute(
+	const [rows] = await mysqlPool.execute(
 		'SELECT id, filename, mime, data FROM images WHERE id = ?',
 		[id]
 	);
@@ -188,7 +196,9 @@ app.get('/health', (req, res) => res.json({ ok: true }));
 	await initMySQL();
 
 	await pollAll();
-	setInterval(pollAll, 5000);
+	setInterval(() => {
+		pollAll().catch((e) => console.log('[pollAll] failed:', e?.message || e));
+	}, 5000);
 
 	app.listen(PORT, '0.0.0.0', () => console.log('C06 API listening on', PORT));
 })();
