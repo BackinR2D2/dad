@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tomee>
+  <Resource id="DadJmsRA" type="ActiveMQResourceAdapter">
+    ServerUrl = tcp://c02:61616
+    UserName  = dad
+    Password  = dad
+  </Resource>
+
+  <Container id="MyMdbContainer" type="MESSAGE">
+    ResourceAdapter = DadJmsRA
+  </Container>
+
+  <Resource id="jms/ConnectionFactory" type="jakarta.jms.ConnectionFactory">
+    ResourceAdapter = DadJmsRA
+  </Resource>
+
+  <Resource id="jms/bmpTopic" type="jakarta.jms.Topic">
+    PhysicalName = bmp.topic
+  </Resource>
+
+  <Resource id="jms/jobDoneQueue" type="jakarta.jms.Queue">
+    PhysicalName = job.done.queue
+  </Resource>
+</tomee>

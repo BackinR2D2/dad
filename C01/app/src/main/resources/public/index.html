@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DAD BMP Zoom</title>
+  <style>
+    body{ font-family: system-ui, Arial; max-width: 900px; margin: 24px auto; padding: 0 12px; }
+    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+    input[type=file]{ padding:6px; }
+    input, select, button{ padding:8px; }
+    button{ cursor:pointer; }
+    #log{ white-space: pre-wrap; background:#f6f6f6; padding:12px; border-radius:8px; min-height: 140px; }
+    .card{ border:1px solid #e5e5e5; border-radius: 12px; padding: 12px; }
+  </style>
+</head>
+<body>
+  <h1>DAD – BMP Zoom In/Out</h1>
+
+  <div class="card">
+    <div class="row">
+      <input id="file" type="file" accept=".bmp,image/bmp" />
+      <label>Mode:
+        <select id="mode">
+          <option value="true">Zoom In</option>
+          <option value="false">Zoom Out</option>
+        </select>
+      </label>
+      <label>Percent:
+        <input id="percent" type="number" min="1" max="500" value="20" />
+      </label>
+      <button id="send">Send</button>
+    </div>
+    <p id="status">Status: idle</p>
+    <p><a id="download" href="#" style="display:none">Download result</a></p>
+  </div>
+
+  <h2>Logs</h2>
+  <div id="log"></div>
+
+  <h2>SNMP Dashboard (C06)</h2>
+  <div class="card">
+    <button id="refreshSnmp">Refresh</button>
+    <pre id="snmp"></pre>
+  </div>
+
+<script>
+const logEl = document.getElementById('log');
+const statusEl = document.getElementById('status');
+const downloadEl = document.getElementById('download');
+const snmpEl = document.getElementById('snmp');
+
+function log(msg){
+  logEl.textContent += `[${new Date().toLocaleTimeString()}] ${msg}\n`;
+  logEl.scrollTop = logEl.scrollHeight;
+}
+
+const wsUrl = `ws://${location.host}/ws`;
+function connectWs(){
+  const ws = new WebSocket(wsUrl);
+  ws.onopen = () => log('WS connected');
+  ws.onmessage = (ev) => {
+    log('WS: ' + ev.data);
+    try{
+      const data = JSON.parse(ev.data);
+      if(data.status === 'DONE'){
+        statusEl.textContent = `Status: DONE (jobId=${data.jobId})`;
+        downloadEl.href = data.downloadUrl;
+        downloadEl.style.display = 'inline';
+        downloadEl.textContent = 'Download result (C06)';
+      }
+    }catch(e){}
+  };
+  ws.onclose = () => { log('WS closed, reconnecting...'); setTimeout(connectWs, 1000); };
+}
+connectWs();
+
+document.getElementById('send').onclick = async () => {
+  const f = document.getElementById('file').files[0];
+  if(!f){ alert('Choose a BMP first'); return; }
+
+  downloadEl.style.display = 'none';
+  statusEl.textContent = 'Status: sending...';
+
+  const fd = new FormData();
+  fd.append('file', f);
+  fd.append('zoomIn', document.getElementById('mode').value);
+  fd.append('percent', document.getElementById('percent').value);
+
+  const res = await fetch('/api/jobs', { method:'POST', body: fd });
+  const json = await res.json();
+  log('POST /api/jobs => ' + JSON.stringify(json));
+  statusEl.textContent = `Status: ${json.status} (jobId=${json.jobId})`;
+};
+
+document.getElementById('refreshSnmp').onclick = async () => {
+  const res = await fetch('http://localhost:3000/snmp/latest');
+  const json = await res.json();
+  snmpEl.textContent = JSON.stringify(json, null, 2);
+};
+</script>
+</body>
+</html>

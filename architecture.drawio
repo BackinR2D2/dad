@@ -1,0 +1,41 @@
+<mxfile host="app.diagrams.net" modified="2026-01-06T00:00:00.000Z" agent="ChatGPT" version="22.1.0" type="device">
+  <diagram id="DAD" name="Architecture">
+    <mxGraphModel dx="1200" dy="800" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1100" pageHeight="850" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        <mxCell id="fe" value="Front-end (HTML/JS)\nserved by C01" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="60" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="c01" value="C01 (Javalin)\nREST upload + WS notify\nJMS publisher" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="60" width="240" height="100" as="geometry"/>
+        </mxCell>
+        <mxCell id="c02" value="C02\nActiveMQ Broker\nTopic bmp.topic\nQueue job.done.queue" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="60" width="230" height="110" as="geometry"/>
+        </mxCell>
+        <mxCell id="c03" value="C03 (TomEE + MDB)\nSubscribes Topic\nRMI client\nStores to C06\nPublishes DONE" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="320" y="240" width="240" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="c04" value="C04 (RMI Server)\nZoom Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="260" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="c05" value="C05 (RMI Server)\nZoom Service" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="40" y="370" width="220" height="80" as="geometry"/>
+        </mxCell>
+        <mxCell id="c06" value="C06 (Node.js)\nMySQL (BLOB images)\nMongoDB (SNMP metrics)\nREST: /images, /snmp" style="rounded=1;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="620" y="250" width="280" height="140" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e1" style="endArrow=block;html=1;" edge="1" parent="1" source="fe" target="c01"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e2" value="JMS Topic (BMP bytes)" style="endArrow=block;html=1;" edge="1" parent="1" source="c01" target="c02"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e3" value="MDB subscribe" style="endArrow=block;html=1;" edge="1" parent="1" source="c02" target="c03"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e4" value="RMI" style="endArrow=block;html=1;" edge="1" parent="1" source="c03" target="c04"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e5" value="RMI" style="endArrow=block;html=1;" edge="1" parent="1" source="c03" target="c05"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e6" value="REST store /images" style="endArrow=block;html=1;" edge="1" parent="1" source="c03" target="c06"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e7" value="JMS DONE queue" style="endArrow=block;html=1;" edge="1" parent="1" source="c03" target="c02"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e8" value="consume DONE" style="endArrow=block;html=1;" edge="1" parent="1" source="c02" target="c01"><mxGeometry relative="1" as="geometry"/></mxCell>
+        <mxCell id="e9" value="WS notify + redirect link" style="endArrow=block;html=1;" edge="1" parent="1" source="c01" target="fe"><mxGeometry relative="1" as="geometry"/></mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

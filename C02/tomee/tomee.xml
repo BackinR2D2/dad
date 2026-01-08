@@ -1,0 +1,13 @@
+<tomee>
+  <Resource id="jms/ConnectionFactory" type="jakarta.jms.ConnectionFactory">
+    BrokerUrl = tcp://c02:61616
+  </Resource>
+
+  <Resource id="jms/bmpTopic" type="jakarta.jms.Topic">
+    destination = bmp.topic
+  </Resource>
+
+  <Resource id="jms/jobDoneQueue" type="jakarta.jms.Queue">
+    destination = job.done.queue
+  </Resource>
+</tomee>

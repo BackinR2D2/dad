@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:amq="http://activemq.apache.org/schema/core"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+           http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+           http://activemq.apache.org/schema/core http://activemq.apache.org/schema/core/activemq-core.xsd">
+
+  <bean class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer"/>
+
+  <amq:broker brokerName="dad-broker"
+              dataDirectory="${activemq.data}"
+              useJmx="true"
+              persistent="false">
+
+    <amq:destinations>
+      <amq:queue physicalName="job.done.queue"/>
+      <amq:topic physicalName="bmp.topic"/>
+    </amq:destinations>
+
+    <amq:plugins>
+      <amq:simpleAuthenticationPlugin>
+        <amq:users>
+          <amq:authenticationUser username="dad" password="dad" groups="users,admins"/>
+        </amq:users>
+      </amq:simpleAuthenticationPlugin>
+
+      <amq:authorizationPlugin>
+        <amq:map>
+          <amq:authorizationMap>
+            <amq:authorizationEntries>
+              <amq:authorizationEntry queue=">" read="users" write="users" admin="admins"/>
+              <amq:authorizationEntry topic=">" read="users" write="users" admin="admins"/>
+              <amq:authorizationEntry topic="ActiveMQ.Advisory.>" read="users" write="users" admin="admins"/>
+            </amq:authorizationEntries>
+          </amq:authorizationMap>
+        </amq:map>
+      </amq:authorizationPlugin>
+    </amq:plugins>
+
+    <!-- Transport OpenWire + Web Console -->
+    <amq:transportConnectors>
+      <amq:transportConnector name="openwire" uri="tcp://0.0.0.0:61616?maximumConnections=1000&amp;wireFormat.maxFrameSize=104857600"/>
+    </amq:transportConnectors>
+
+    <amq:managementContext>
+      <amq:managementContext createConnector="false"/>
+    </amq:managementContext>
+
+  </amq:broker>
+
+</beans>
