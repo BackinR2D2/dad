@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" version="29.3.0">
+  <diagram name="DAD – Diagram" id="0">
+    <mxGraphModel dx="2775" dy="2695" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="2400" pageHeight="1400" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="zone_main" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontSize=16;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="680" width="2390" x="30" y="-140" as="geometry" />
+        </mxCell>
+        <mxCell id="zone_jms" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontSize=16;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="415" width="2320" x="30" y="585" as="geometry" />
+        </mxCell>
+        <mxCell id="zone_snmp" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#b3b3b3;fontSize=16;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="750" width="2330" x="50" y="1040" as="geometry" />
+        </mxCell>
+        <mxCell id="browser" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;" value="Client Browser UI&#xa;(Plain JS/HTML/CSS)&#xa;&#xa;Actions:&#xa;• Upload BMP&#xa;• Select zoomIn + percent&#xa;• Shows PENDING/DONE&#xa;• Download processed BMP" vertex="1">
+          <mxGeometry height="170" width="310" x="80" y="-30" as="geometry" />
+        </mxCell>
+        <mxCell id="c01" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="c01 — Gateway + API (Javalin)&#xa;&#xa;HTTP: POST /api/jobs (multipart)&#xa;HTTP: GET /api/jobs/{jobId}&#xa;WS: /ws (live updates)&#xa;&#xa;Creates jobId, validates BMP header (BM)&#xa;Publishes JMS job to bmp.topic&#xa;Consumes DONE from job.done.queue" vertex="1">
+          <mxGeometry height="230" width="420" x="440" y="-40" as="geometry" />
+        </mxCell>
+        <mxCell id="c02" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" value="c02 — ActiveMQ Broker&#xa;&#xa;JMS Destinations:&#xa;• Topic: bmp.topic&#xa;• Queue: job.done.queue&#xa;&#xa;Port: 61616/TCP" vertex="1">
+          <mxGeometry height="190" width="330" x="910" y="-20" as="geometry" />
+        </mxCell>
+        <mxCell id="c03" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="c03 — Jakarta EE (TomEE)&#xa;Message-Driven Bean: BmpJobMdb&#xa;&#xa;Consumes bmp.topic (Durable)&#xa;Splits BMP (top/bottom)&#xa;Calls RMI servers (c04/c05)&#xa;Merges output BMP&#xa;Stores result via REST to c06&#xa;Publishes DONE to job.done.queue" vertex="1">
+          <mxGeometry height="270" width="460" x="1260" y="-60" as="geometry" />
+        </mxCell>
+        <mxCell id="c04" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="c04 — RMI Server&#xa;(Top Half)&#xa;&#xa;ZoomService&#xa;Input: top-half BMP&#xa;Output: processed top-half BMP&#xa;Port: 1099/TCP" vertex="1">
+          <mxGeometry height="140" width="280" x="2100" y="-80" as="geometry" />
+        </mxCell>
+        <mxCell id="c05" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="c05 — RMI Server&#xa;(Bottom Half)&#xa;&#xa;ZoomService&#xa;Input: bottom-half BMP&#xa;Output: processed bottom-half BMP&#xa;Port: 1099/TCP" vertex="1">
+          <mxGeometry height="140" width="280" x="1770" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="c06" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="c06 — Storage Service (Node.js)&#xa;&#xa;REST: POST /images (octet-stream BMP)&#xa;REST: GET /images/{id} (download)&#xa;Port: 3000/TCP&#xa;&#xa;Stores processed BMP into MySQL as BLOB" vertex="1">
+          <mxGeometry height="160" width="460" x="1270" y="250" as="geometry" />
+        </mxCell>
+        <mxCell id="mysql" parent="1" style="shape=cylinder;whiteSpace=wrap;html=1;boundedLbl=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=12;" value="MySQL (inside c06)&#xa;&#xa;Table: images&#xa;• id (PK, auto)&#xa;• job_id (optional)&#xa;• filename&#xa;• mime (image/bmp)&#xa;• zoom_in (bool)&#xa;• percent (int)&#xa;• created_at (timestamp)&#xa;• data_blob (BLOB) — processed BMP bytes" vertex="1">
+          <mxGeometry height="250" width="380" x="1890" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" edge="1" parent="1" source="browser" style="endArrow=block;html=1;strokeColor=#1a73e8;strokeWidth=2;rounded=1;" target="c01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" edge="1" parent="1" source="c01" style="endArrow=block;html=1;strokeColor=#d79b00;strokeWidth=2;rounded=1;" target="c02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" edge="1" parent="1" source="c02" style="endArrow=block;html=1;strokeColor=#d79b00;strokeWidth=2;rounded=1;" target="c03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a4" edge="1" parent="1" source="c03" style="endArrow=block;html=1;strokeColor=#6a1b9a;strokeWidth=2;rounded=1;" target="c04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a5" edge="1" parent="1" source="c03" style="endArrow=block;html=1;strokeColor=#6a1b9a;strokeWidth=2;rounded=1;" target="c05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a6" edge="1" parent="1" source="c03" style="endArrow=block;html=1;strokeColor=#b85450;strokeWidth=2;rounded=1;" target="c06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a7" edge="1" parent="1" source="c06" style="endArrow=block;html=1;strokeColor=#d6b656;strokeWidth=2;rounded=1;" target="mysql">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a8" edge="1" parent="1" source="c03" style="endArrow=block;html=1;strokeColor=#2e7d32;strokeWidth=2;rounded=1;" target="c02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a9" edge="1" parent="1" source="c02" style="endArrow=block;html=1;strokeColor=#2e7d32;strokeWidth=2;rounded=1;" target="c01">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="a10" edge="1" parent="1" source="c01" style="endArrow=block;html=1;strokeColor=#1a73e8;strokeWidth=2;rounded=1;" target="browser">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="note_http" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#1a73e8;fontSize=12;" value="HTTP/WS&#xa;• Upload: POST /api/jobs&#xa;• Status: GET /api/jobs/{jobId}&#xa;• Live updates: WS /ws" vertex="1">
+          <mxGeometry height="90" width="310" x="80" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="note_topic" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d79b00;fontSize=12;" value="JMS Topic: bmp.topic&#xa;Producer (c01): DeliveryMode=PERSISTENT&#xa;Consumer (c03): Durable subscription&#xa;(clientId=c03Client, sub=bmpSub)" vertex="1">
+          <mxGeometry height="95" width="330" x="900" y="227.5" as="geometry" />
+        </mxCell>
+        <mxCell id="note_rmi" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6a1b9a;fontSize=12;" value="RMI fan-out&#xa;c03 → c04 (top) + c05 (bottom)&#xa;Port: 1099/TCP&#xa;Goal: parallelizable processing" vertex="1">
+          <mxGeometry height="70" width="330" x="1745" y="-100" as="geometry" />
+        </mxCell>
+        <mxCell id="note_rest_db" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#b85450;fontSize=12;" value="REST + DB&#xa;c03 POST /images → c06: stores BMP bytes&#xa;c06 returns imageId&#xa;MySQL stores processed BMP as BLOB" vertex="1">
+          <mxGeometry height="70" width="460" x="1260" y="440" as="geometry" />
+        </mxCell>
+        <mxCell id="note_done" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#2e7d32;fontSize=12;" value="Completion notification&#xa;c03 → job.done.queue → c01&#xa;Properties: jobId + imageId&#xa;c01 updates UI to DONE + downloadUrl" vertex="1">
+          <mxGeometry height="70" width="420" x="430" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="b_jms_box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;fontStyle=1;" value="JMS Reliability Model (What makes it stable &amp; repeatable)" vertex="1">
+          <mxGeometry height="280" width="880" x="80" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="b_jms_text" parent="1" style="whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ffffff;fontSize=12;" value="1) Producer side (c01 → Topic):&#xa;   • send(bmpBytes) with DeliveryMode=PERSISTENT&#xa;   • properties: jobId, zoomIn, percent, filename&#xa;&#xa;2) Broker side (c02):&#xa;   • Topic bmp.topic stores persistent messages until delivered&#xa;   • Queue job.done.queue stores completion messages&#xa;&#xa;3) Consumer side (c03 MDB):&#xa;   • Durable subscription (clientId=c03Client, sub=bmpSub)&#xa;   • prevents message loss during reconnection/restart&#xa;   • maxSessions=1 avoids multiple consumers inside same container&#xa;&#xa;Result: stable consumption across multiple uploads, even if c03 reconnects." vertex="1">
+          <mxGeometry height="210" width="840" x="100" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="b_msg_contract" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;fontStyle=1;" value="Message Contract (bmp.topic payload)" vertex="1">
+          <mxGeometry height="280" width="640" x="1010" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="b_msg_text" parent="1" style="whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ffffff;fontSize=12;" value="Destination: Topic bmp.topic&#xa;&#xa;Properties:&#xa;• jobId: String (UUID)&#xa;• zoomIn: boolean&#xa;• percent: int&#xa;• filename: String&#xa;&#xa;Body: byte[] BMP file&#xa;• BMP header starts with &#39;BM&#39; (0x42 0x4D)&#xa;&#xa;Processing contract:&#xa;• c03 splits BMP into halves&#xa;• c04/c05 return valid BMP halves&#xa;• c03 merges and stores final BMP" vertex="1">
+          <mxGeometry height="210" width="600" x="1030" y="725" as="geometry" />
+        </mxCell>
+        <mxCell id="b_done_contract" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;fontStyle=1;" value="Message Contract (job.done.queue payload)" vertex="1">
+          <mxGeometry height="280" width="600" x="1700" y="690" as="geometry" />
+        </mxCell>
+        <mxCell id="b_done_text" parent="1" style="whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ffffff;fontSize=12;" value="Destination: Queue job.done.queue&#xa;&#xa;Properties:&#xa;• jobId: String&#xa;• imageId: long&#xa;&#xa;Semantics:&#xa;• c01 receives DONE and maps jobId → imageId&#xa;• c01 returns downloadUrl = http://c06:3000/images/{imageId}&#xa;• UI moves status from PENDING → DONE&#xa;&#xa;Reason for Queue: exactly-once delivery to c01 (single consumer)." vertex="1">
+          <mxGeometry height="210" width="560" x="1720" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="c_snmp_box" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;fontStyle=1;" value="SNMP Overview" vertex="1">
+          <mxGeometry height="340" width="640" x="80" y="1230" as="geometry" />
+        </mxCell>
+        <mxCell id="c_snmp_text" parent="1" style="whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#ffffff;fontSize=12;" value="Agents: each container runs snmpd (UDP/161)&#xa;• c01, c02, c03, c04, c05, c06&#xa;&#xa;Manager/Poller: typically c01 (or external monitoring tool)&#xa;• runs snmpget/snmpwalk to query agents&#xa;&#xa;What you monitor (examples):&#xa;• system uptime, CPU load, memory usage&#xa;• network stats, interface counters&#xa;• process availability (TomEE/RMI/Node)&#xa;&#xa;Why SNMP here: operational visibility + health monitoring for distributed system." vertex="1">
+          <mxGeometry height="260" width="600" x="100" y="1270" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_nodes" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=14;fontStyle=1;" value="" vertex="1">
+          <mxGeometry height="340" width="1595" x="765" y="1220" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_c01" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=12;" value="c01 snmpd&#xa;UDP/161" vertex="1">
+          <mxGeometry height="80" width="210" x="820" y="1320" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_c02" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;fontSize=12;" value="c02 snmpd&#xa;UDP/161" vertex="1">
+          <mxGeometry height="80" width="210" x="1100" y="1320" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_c03" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=12;" value="c03 snmpd&#xa;UDP/161" vertex="1">
+          <mxGeometry height="80" width="210" x="1370" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_c04" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="c04 snmpd&#xa;UDP/161" vertex="1">
+          <mxGeometry height="80" width="210" x="1630" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_c05" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=12;" value="c05 snmpd&#xa;UDP/161" vertex="1">
+          <mxGeometry height="80" width="210" x="1880" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_c06" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=12;" value="c06 snmpd&#xa;UDP/161" vertex="1">
+          <mxGeometry height="80" width="210" x="2110" y="1310" as="geometry" />
+        </mxCell>
+        <mxCell id="sn1" edge="1" parent="1" source="snmp_c01" style="endArrow=block;html=1;strokeColor=#555555;strokeWidth=2;dashed=1;rounded=1;" target="snmp_c02">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sn2" edge="1" parent="1" source="snmp_c01" style="endArrow=block;html=1;strokeColor=#555555;strokeWidth=2;dashed=1;rounded=1;" target="snmp_c03">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sn3" edge="1" parent="1" source="snmp_c01" style="endArrow=block;html=1;strokeColor=#555555;strokeWidth=2;dashed=1;rounded=1;" target="snmp_c04">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sn4" edge="1" parent="1" source="snmp_c01" style="endArrow=block;html=1;strokeColor=#555555;strokeWidth=2;dashed=1;rounded=1;" target="snmp_c05">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sn5" edge="1" parent="1" source="snmp_c01" style="endArrow=block;html=1;strokeColor=#555555;strokeWidth=2;dashed=1;rounded=1;" target="snmp_c06">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="snmp_note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;" value="Dashed arrows = SNMP monitoring traffic (snmpget/snmpwalk)&#xa;All SNMP traffic uses UDP/161 inside docker network" vertex="1">
+          <mxGeometry height="60" width="1410" x="810" y="1460" as="geometry" />
+        </mxCell>
+        <mxCell id="ports" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#666666;fontSize=12;" value="Ports Summary (Project Correctness)&#xa;&#xa;c01: 8081 (HTTP/WS), 161/udp (snmpd)&#xa;c02: 61616 (JMS), 161/udp (snmpd)&#xa;c03: 8080 (TomEE), 161/udp (snmpd)&#xa;c04: 1099 (RMI), 161/udp (snmpd)&#xa;c05: 1099 (RMI), 161/udp (snmpd)&#xa;c06: 3000 (REST), 3306 internal (MySQL), 161/udp (snmpd)" vertex="1">
+          <mxGeometry height="160" width="2255" x="95" y="1590" as="geometry" />
+        </mxCell>
+        <mxCell id="0phbmQUSwdIXUbR7lvxz-1" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&lt;span style=&quot;font-size: 16px; font-weight: 700;&quot;&gt;SEGMENT B — Messaging Details (JMS Topic/Queue, Reliability, Properties)&lt;/span&gt;" vertex="1">
+          <mxGeometry height="50" width="370" x="95" y="610" as="geometry" />
+        </mxCell>
+        <mxCell id="0phbmQUSwdIXUbR7lvxz-2" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&#xa;&lt;span style=&quot;color: rgb(255, 255, 255); font-family: Helvetica; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 700; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(27, 29, 30); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;&quot;&gt;SEGMENT C — SNMP Monitoring (snmpd agents + manager/poller + OIDs)&lt;/span&gt;&#xa;&#xa;" vertex="1">
+          <mxGeometry height="80" width="400" x="1022.5" y="1090" as="geometry" />
+        </mxCell>
+        <mxCell id="0phbmQUSwdIXUbR7lvxz-4" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="&#xa;&lt;span style=&quot;color: rgb(255, 255, 255); font-family: Helvetica; font-size: 16px; font-style: normal; font-variant-ligatures: normal; font-variant-caps: normal; font-weight: 700; letter-spacing: normal; orphans: 2; text-align: center; text-indent: 0px; text-transform: none; widows: 2; word-spacing: 0px; -webkit-text-stroke-width: 0px; white-space: normal; background-color: rgb(27, 29, 30); text-decoration-thickness: initial; text-decoration-style: initial; text-decoration-color: initial; display: inline !important; float: none;&quot;&gt;SEGMENT A — End-to-End Data Flow (Upload → Process → Store → Notify)&lt;/span&gt;&#xa;&#xa;" vertex="1">
+          <mxGeometry height="80" width="480" x="80" y="380" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
