@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tomee>
   <Resource id="DadJmsRA" type="ActiveMQResourceAdapter">
-    ServerUrl = tcp://c02:61616
+    ServerUrl = failover:(tcp://c02:61616)?initialReconnectDelay=1000&amp;maxReconnectDelay=30000&amp;useExponentialBackOff=true
     UserName  = dad
     Password  = dad
   </Resource>
@@ -10,8 +10,15 @@
     ResourceAdapter = DadJmsRA
   </Container>
 
-  <Resource id="jms/ConnectionFactory" type="jakarta.jms.ConnectionFactory">
+  <!-- Inbound CF: used only by MDB consumer -->
+  <Resource id="jms/InboundConnectionFactory" type="jakarta.jms.ConnectionFactory">
     ResourceAdapter = DadJmsRA
+  </Resource>
+
+  <!-- Outbound CF: used only for publishing job-done -->
+  <Resource id="jms/OutboundConnectionFactory" type="jakarta.jms.ConnectionFactory">
+    ResourceAdapter = DadJmsRA
+    ClientID = c03Publisher
   </Resource>
 
   <Resource id="jms/bmpTopic" type="jakarta.jms.Topic">

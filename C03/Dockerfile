@@ -6,12 +6,44 @@ ENV LANG=C.UTF-8 \
   MAVEN_OPTS="-Dfile.encoding=UTF-8"
 
 RUN apt-get update && \
-  apt-get install -y --no-install-recommends maven openjdk-17-jdk && \
+  apt-get install -y --no-install-recommends maven openjdk-17-jdk ca-certificates curl && \
   rm -rf /var/lib/apt/lists/*
 
+# Copy pom first for layer caching
 COPY app/pom.xml app/pom.xml
+
+# Pre-fetch dependencies with retries + better network tolerance
+# Use BuildKit cache for ~/.m2 to avoid re-downloading each build
+RUN --mount=type=cache,target=/root/.m2 \
+  bash -lc 'set -e; \
+  for i in 1 2 3 4 5; do \
+  echo "Maven go-offline attempt $i/5"; \
+  mvn -f app/pom.xml -DskipTests -e -B \
+  -Dmaven.wagon.http.retryHandler.count=5 \
+  -Dmaven.wagon.httpconnectionManager.ttlSeconds=60 \
+  -Dmaven.wagon.http.timeout=120000 \
+  -Dmaven.wagon.http.readTimeout=120000 \
+  dependency:go-offline && break; \
+  echo "Retrying in 3s..."; \
+  sleep 3; \
+  done'
+
+# Copy sources after deps are cached
 COPY app/src app/src
-RUN mvn -f app/pom.xml -DskipTests package
+
+RUN --mount=type=cache,target=/root/.m2 \
+  bash -lc 'set -e; \
+  for i in 1 2 3 4 5; do \
+  echo "Maven package attempt $i/5"; \
+  mvn -f app/pom.xml -DskipTests -B \
+  -Dmaven.wagon.http.retryHandler.count=5 \
+  -Dmaven.wagon.httpconnectionManager.ttlSeconds=60 \
+  -Dmaven.wagon.http.timeout=120000 \
+  -Dmaven.wagon.http.readTimeout=120000 \
+  package && break; \
+  echo "Retrying in 3s..."; \
+  sleep 3; \
+  done'
 
 FROM critoma/linux-u20-dev-security-ism:latest
 

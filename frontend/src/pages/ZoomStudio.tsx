@@ -155,7 +155,7 @@ export function ZoomStudio({ onWsState }: { onWsState: (s: any) => void }) {
 								type='number'
 								min={1}
 								max={90}
-								value={percent}
+								value={String(percent)}
 								disabled={busy}
 								onChange={(e) => setPercent(Number(e.target.value))}
 							/>

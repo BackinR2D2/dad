@@ -1,5 +1,6 @@
 package ro.ase.dad.c03;
 
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -17,26 +18,35 @@ public class HttpToC06Client {
                 + "&zoomIn=" + zoomIn
                 + "&percent=" + percent;
 
-        URL url = new URL(urlStr);
-        HttpURLConnection con = (HttpURLConnection) url.openConnection();
-        con.setRequestMethod("POST");
-        con.setDoOutput(true);
-        con.setConnectTimeout(5000);
-        con.setReadTimeout(30000);
-        con.setRequestProperty("Content-Type", "application/octet-stream");
-        con.setRequestProperty("Content-Length", String.valueOf(bmp.length));
+        HttpURLConnection con = null;
+        try {
+            URL url = new URL(urlStr);
+            con = (HttpURLConnection) url.openConnection();
+            con.setRequestMethod("POST");
+            con.setDoOutput(true);
+            con.setConnectTimeout(5000);
+            con.setReadTimeout(30000);
+            con.setRequestProperty("Content-Type", "application/octet-stream");
+            con.setRequestProperty("Content-Length", String.valueOf(bmp.length));
 
-        try (OutputStream os = con.getOutputStream()) {
-            os.write(bmp);
+            try (OutputStream os = con.getOutputStream()) {
+                os.write(bmp);
+            }
+
+            int code = con.getResponseCode();
+            if (code < 200 || code >= 300) {
+                throw new RuntimeException("C06 storeImage HTTP " + code);
+            }
+
+            try (InputStream is = con.getInputStream()) {
+                String json = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                return extractId(json);
+            }
+        } finally {
+            if (con != null) {
+                con.disconnect();
+            }
         }
-
-        int code = con.getResponseCode();
-        if (code < 200 || code >= 300) {
-            throw new RuntimeException("C06 storeImage HTTP " + code);
-        }
-
-        String json = new String(con.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
-        return extractId(json);
     }
 
     private static String enc(String s) {

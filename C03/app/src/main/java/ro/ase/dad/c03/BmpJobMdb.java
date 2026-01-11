@@ -3,20 +3,20 @@ package ro.ase.dad.c03;
 import jakarta.ejb.ActivationConfigProperty;
 import jakarta.ejb.EJB;
 import jakarta.ejb.MessageDriven;
-import jakarta.jms.Message;
-import jakarta.jms.MessageListener;
 import jakarta.ejb.TransactionAttribute;
 import jakarta.ejb.TransactionAttributeType;
+import jakarta.jms.Message;
+import jakarta.jms.MessageListener;
 
 @MessageDriven(activationConfig = {
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "jakarta.jms.Topic"),
         @ActivationConfigProperty(propertyName = "destination", propertyValue = "bmp.topic"),
 
         @ActivationConfigProperty(propertyName = "subscriptionDurability", propertyValue = "Durable"),
-        @ActivationConfigProperty(propertyName = "clientId", propertyValue = "c03Client"),
+        @ActivationConfigProperty(propertyName = "clientId", propertyValue = "c03Consumer"),
         @ActivationConfigProperty(propertyName = "subscriptionName", propertyValue = "bmpSub"),
 
-        @ActivationConfigProperty(propertyName = "connectionFactoryLookup", propertyValue = "jms/ConnectionFactory")
+        @ActivationConfigProperty(propertyName = "connectionFactoryLookup", propertyValue = "jms/InboundConnectionFactory")
 })
 @TransactionAttribute(TransactionAttributeType.NOT_SUPPORTED)
 public class BmpJobMdb implements MessageListener {
@@ -43,7 +43,6 @@ public class BmpJobMdb implements MessageListener {
             String filename = message.getStringProperty("filename");
             String jobId = message.getStringProperty("jobId");
 
-            // body as bytes
             byte[] bmp = message.getBody(byte[].class);
 
             System.out.println("C03: Received jobId=" + jobId + " bytes=" + bmp.length +
@@ -51,7 +50,6 @@ public class BmpJobMdb implements MessageListener {
 
             System.out.println("C03: header=" + hex(bmp, 16));
 
-            // strict BMP check
             if (bmp.length < 2 || bmp[0] != 'B' || bmp[1] != 'M') {
                 throw new IllegalArgumentException("Not a BMP");
             }
@@ -72,6 +70,7 @@ public class BmpJobMdb implements MessageListener {
         } catch (Exception e) {
             System.out.println("C03 MDB error: " + e.getMessage());
             e.printStackTrace();
+            // throw new RuntimeException(e);
         }
     }
 
