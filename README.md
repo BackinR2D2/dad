@@ -3,6 +3,8 @@
 This project implements a **distributed system for BMP image processing**, developed for the **Distributed Applications Design (DAD)** course.  
 The architecture is based on microservices, asynchronous messaging, and parallel processing.
 
+This project is available on GitHub: https://github.com/BackinR2D2/dad
+
 ---
 
 ## Architecture Overview
@@ -14,7 +16,6 @@ The system is composed of multiple Docker containers that collaborate to process
 
 - **ActiveMQ Broker (c02)**  
   Handles JMS communication:
-
   - Topic for job distribution
   - Queue for job completion notifications
 
